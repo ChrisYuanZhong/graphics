@@ -42,14 +42,15 @@ void MeGlWindow::paintGL()
 		glGetUniformLocation(programID, "dominatingColor");
 	GLint yFlipUniformLocation =
 		glGetUniformLocation(programID, "yFlip");
-	vec3 dominatingColor(1.0f, 0.0f, 0.0f);
+	vec3 dominatingColor(0.2f, 0.2f, 0.0f);
 
 	glUniform3fv(dominatingColorUniformLocation, 1, &dominatingColor[0]);
 	glUniform1f(yFlipUniformLocation, 1.0f);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, 0);
 
-	dominatingColor.r = 0;
-	dominatingColor.b = 1;
+	dominatingColor.r = 0.2f;
+	dominatingColor.g = 0.2f;
+	dominatingColor.b = 0.8f;
 	glUniform3fv(dominatingColorUniformLocation, 1, &dominatingColor[0]);
 	glUniform1f(yFlipUniformLocation, -1.0f);
 	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, 0);
