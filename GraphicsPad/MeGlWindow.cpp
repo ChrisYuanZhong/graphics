@@ -9,13 +9,20 @@ void sendDataToOpenGL()
 	GLfloat verts[] =
 	{
 		+0.0f, +0.0f,
-		+1.0f, +0.0f, +0.0f,
+		+0.0f, +0.0f, +1.0f,
+
 		+1.0f, +1.0f,
-		+1.0f, +0.0f, +0.0f,
+		+0.0f, +0.0f, +1.0f,
+
 		-1.0f, +1.0f,
+		+0.0f, +0.0f, +1.0f,
+
+		+0.0f, +0.0f,
 		+1.0f, +0.0f, +0.0f,
+
 		-1.0f, -1.0f,
 		+1.0f, +0.0f, +0.0f,
+
 		+1.0f, -1.0f,
 		+1.0f, +0.0f, +0.0f,
 	};
@@ -29,7 +36,7 @@ void sendDataToOpenGL()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (char*)(sizeof(float) * 2));
 
-	GLushort indices[] = { 0,1,2, 0,3,4 };
+	GLushort indices[] = { 0, 1, 2, 3, 4, 5 };
 	GLuint indexBufferID;
 	glGenBuffers(1, &indexBufferID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
