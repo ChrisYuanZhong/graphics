@@ -42,9 +42,9 @@ void MeGlWindow::paintGL()
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
-	mat4 projectionMatrix = glm::perspective(60.0f, ((float)width()) / height(), 0.1f, 10.0f);
-	mat4 projectionTranslationMatrix = glm::translate(projectionMatrix, vec3(0.0f, 0.0f, -3.0f));
-	mat4 fullTransformMatrix = glm::rotate(projectionTranslationMatrix, 54.0f, vec3(1.0f, 0.0f, 0.0f));
+	mat4 projectionMatrix = glm::perspective(70.0f, ((float)width()) / height(), 0.1f, 10.0f);
+	mat4 projectionTranslationMatrix = glm::translate(projectionMatrix, vec3(-6.0f, 2.0f, -6.0f));
+	mat4 fullTransformMatrix = glm::rotate(projectionTranslationMatrix, 45.0f, vec3(1.0f, 1.0f, 1.0f));
 
 	GLint fullTransformMatrixUniformLocation =
 		glGetUniformLocation(programID, "fullTransformMatrix");
@@ -52,6 +52,34 @@ void MeGlWindow::paintGL()
 	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1,
 		GL_FALSE, &fullTransformMatrix[0][0]);
 
+	// Cube 1
+	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
+	
+	projectionTranslationMatrix = glm::translate(projectionMatrix, vec3(6.0f, 2.0f, -6.0f));
+	fullTransformMatrix = glm::rotate(projectionTranslationMatrix, 45.0f, vec3(1.0f, 1.0f, 1.0f));
+
+	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1,
+		GL_FALSE, &fullTransformMatrix[0][0]);
+
+	// Cube 2
+	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
+
+	projectionTranslationMatrix = glm::translate(projectionMatrix, vec3(6.0f, -2.0f, -6.0f));
+	fullTransformMatrix = glm::rotate(projectionTranslationMatrix, 45.0f, vec3(1.0f, 1.0f, 1.0f));
+
+	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1,
+		GL_FALSE, &fullTransformMatrix[0][0]);
+
+	// Cube 3
+	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
+
+	projectionTranslationMatrix = glm::translate(projectionMatrix, vec3(-6.0f, -2.0f, -6.0f));
+	fullTransformMatrix = glm::rotate(projectionTranslationMatrix, 45.0f, vec3(1.0f, 1.0f, 1.0f));
+
+	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1,
+		GL_FALSE, &fullTransformMatrix[0][0]);
+
+	// Cube 4
 	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
 }
 
