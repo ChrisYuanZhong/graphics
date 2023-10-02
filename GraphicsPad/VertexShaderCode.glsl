@@ -14,8 +14,4 @@ void main()
 	gl_Position = vec4(position * scale, 1.0);
 	gl_Position.y = gl_Position.y * yFlip;
 	theColor = dominatingColor;
-	// Change the scale of the object
-	//gl_Position.x = gl_Position.x * scale.x;
-	//gl_Position.y = gl_Position.y * scale.y;
-	//gl_Position.z = gl_Position.z * scale.z;
 }
