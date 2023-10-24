@@ -18,69 +18,135 @@ const uint NUM_VERTICES_PER_TRI = 3;
 const uint NUM_FLOATS_PER_VERTICE = 6;
 const uint VERTEX_BYTE_SIZE = NUM_FLOATS_PER_VERTICE * sizeof(float);
 GLuint programID;
-GLuint numIndices;
+GLuint cubeNumIndices;
+GLuint triangleNumIndices;
+//GLuint arrowNumIndices;
 Camera camera;
+GLuint fullTransformationUniformLocation;
+
+GLuint theBufferID;
+
+GLuint cubeVertexArrayObjectID;
+GLuint triangleVertexArrayObjectID;
+//GLuint arrowVertexArrayObjectID;
+GLuint cubeIndexByteOffset;
+GLuint triangleIndexByteOffset;
+//GLuint arrowIndexByteOffset;
 
 void MeGlWindow::sendDataToOpenGL()
 {
-	ShapeData shape = ShapeGenerator::makeCube();
+	ShapeData cube = ShapeGenerator::makeCube();
+	ShapeData triangle = ShapeGenerator::makeTriangle();
+	//ShapeData arrow = ShapeGenerator::makeArrow();
 
-	GLuint vertexBufferID;
-	glGenBuffers(1, &vertexBufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-	glBufferData(GL_ARRAY_BUFFER, shape.vertexBufferSize(), shape.vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &theBufferID);
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	glBufferData(GL_ARRAY_BUFFER, 
+		cube.vertexBufferSize() + cube.indexBufferSize() +
+		triangle.vertexBufferSize() + triangle.indexBufferSize(), 0, GL_STATIC_DRAW);
+		//arrow.vertexBufferSize() + arrow.indexBufferSize(), 0, GL_STATIC_DRAW);
+	GLsizeiptr currentOffset = 0;
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.vertexBufferSize(), cube.vertices);
+	currentOffset += cube.vertexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.indexBufferSize(), cube.indices);
+	currentOffset += cube.indexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, triangle.vertexBufferSize(), triangle.vertices);
+	currentOffset += triangle.vertexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, triangle.indexBufferSize(), triangle.indices);
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, arrow.vertexBufferSize(), arrow.vertices);
+	//currentOffset += arrow.vertexBufferSize();
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, arrow.indexBufferSize(), arrow.indices);
+
+	cubeNumIndices = cube.numIndices;
+	triangleNumIndices = triangle.numIndices;
+	//arrowNumIndices = arrow.numIndices;
+
+	glGenVertexArrays(1, &cubeVertexArrayObjectID);
+	glGenVertexArrays(1, &triangleVertexArrayObjectID);
+	//glGenVertexArrays(1, &arrowVertexArrayObjectID);
+
+	glBindVertexArray(cubeVertexArrayObjectID);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (char*)(sizeof(float) * 3));
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
-	GLuint indexArrayBufferID;
-	glGenBuffers(1, &indexArrayBufferID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexArrayBufferID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.indexBufferSize(), shape.indices, GL_STATIC_DRAW);
-	numIndices = shape.numIndices;
-	shape.cleanup();
+	glBindVertexArray(triangleVertexArrayObjectID);
+	//glBindVertexArray(arrowVertexArrayObjectID);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	GLuint triByteOffset = cube.vertexBufferSize() + cube.indexBufferSize();
+	//GLuint arrowByteOffset = cube.vertexBufferSize() + cube.indexBufferSize();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)triByteOffset);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(triByteOffset + sizeof(float) * 3));
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)arrowByteOffset);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(arrowByteOffset + sizeof(float) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
-	GLuint transformationMatrixBufferID;
-	glGenBuffers(1, &transformationMatrixBufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, transformationMatrixBufferID);
+	cubeIndexByteOffset = cube.vertexBufferSize();
+	triangleIndexByteOffset = triByteOffset + triangle.vertexBufferSize();
+	//arrowIndexByteOffset = arrowByteOffset + arrow.vertexBufferSize();
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * 2, 0, GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(sizeof(float) * 0));
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(sizeof(float) * 4));
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(sizeof(float) * 8));
-	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(sizeof(float) * 12));
-	glEnableVertexAttribArray(2);
-	glEnableVertexAttribArray(3);
-	glEnableVertexAttribArray(4);
-	glEnableVertexAttribArray(5);
-	glVertexAttribDivisor(2, 1);
-	glVertexAttribDivisor(3, 1);
-	glVertexAttribDivisor(4, 1);
-	glVertexAttribDivisor(5, 1);
-
+	cube.cleanup();
+	triangle.cleanup();
+	//arrow.cleanup();
 }
 
 void MeGlWindow::paintGL()
 {
-	mat4 projectionMatrix = glm::perspective(60.0f, ((float)width()) / height(), 0.1f, 10.0f);
-	mat4 fullTransforms[] =
-	{
-		projectionMatrix * camera.getWorldToViewMatrix() * glm::translate(vec3(-1.0f, 0.0f, -3.0f)) * glm::rotate(36.0f, vec3(1.0f, 0.0f, 0.0f)),
-		projectionMatrix * camera.getWorldToViewMatrix() * glm::translate(vec3(1.0f, 0.0f, -3.75f)) * glm::rotate(126.0f, vec3(0.0f, 1.0f, 0.0f))
-	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(fullTransforms), fullTransforms, GL_DYNAMIC_DRAW);
-
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, width(), height());
 
-	glDrawElementsInstanced(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0, 2);
+	mat4 fullTransformMatrix;
+	mat4 viewToProjectionMatrix = glm::perspective(60.0f, ((float)width()) / height(), 0.1f, 10.0f);
+	mat4 worldToViewMatrix = camera.getWorldToViewMatrix();
+	mat4 worldToProjectionMatrix = viewToProjectionMatrix * worldToViewMatrix;
+
+	// Cube
+	glBindVertexArray(cubeVertexArrayObjectID);
+	mat4 cube1ModelToWorldMatrix =
+		glm::translate(vec3(0.0f, 0.0f, -4.0f)) *
+		glm::rotate(45.0f, vec3(1.0f, 1.0f, 0.0f));
+	fullTransformMatrix = worldToProjectionMatrix * cube1ModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)cubeIndexByteOffset);
+
+	//mat4 cube2ModelToWorldMatrix =
+	//	glm::translate(vec3(2.0f, 0.0f, -3.75f)) *
+	//	glm::rotate(126.0f, vec3(0.0f, 1.0f, 0.0f));
+	//fullTransformMatrix = worldToProjectionMatrix * cube2ModelToWorldMatrix;
+	//glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	//glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)cubeIndexByteOffset);
+
+	// Triangle1
+	glBindVertexArray(triangleVertexArrayObjectID);
+	mat4 triangleModelToWorldMatrix = glm::translate(vec3(-4.0f, 1.0f, -4.0f));
+	fullTransformMatrix = worldToProjectionMatrix * triangleModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, triangleNumIndices, GL_UNSIGNED_SHORT, (void*)triangleIndexByteOffset);
+
+	// Triangle2
+	glBindVertexArray(triangleVertexArrayObjectID);
+	triangleModelToWorldMatrix = glm::translate(vec3(4.0f, -1.0f, -4.0f));
+	fullTransformMatrix = worldToProjectionMatrix * triangleModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, triangleNumIndices, GL_UNSIGNED_SHORT, (void*)triangleIndexByteOffset);
+
+	//// Arrow
+	//glBindVertexArray(arrowVertexArrayObjectID);
+	//mat4 arrowModelToWorldMatrix = glm::translate(0.0f, 0.0f, -3.0f);
+	//fullTransformMatrix = worldToProjectionMatrix * arrowModelToWorldMatrix;
+	//glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	//glDrawElements(GL_TRIANGLES, arrowNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
 }
 
 void MeGlWindow::mouseMoveEvent(QMouseEvent* e)
 {
-	camera.mouseUpdate(glm::vec2(e->x(), e->y()));
-	repaint();
+	//camera.mouseUpdate(glm::vec2(e->x(), e->y()));
+	//repaint();
 }
 
 void MeGlWindow::keyPressEvent(QKeyEvent* e)
@@ -109,7 +175,7 @@ void MeGlWindow::keyPressEvent(QKeyEvent* e)
 	repaint();
 }
 
-bool checkStatus(
+bool MeGlWindow::checkStatus(
 	GLuint objectID,
 	PFNGLGETSHADERIVPROC objectPropertyGetterFunc,
 	PFNGLGETSHADERINFOLOGPROC getInfoLogFunc,
@@ -196,10 +262,12 @@ void MeGlWindow::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	sendDataToOpenGL();
 	installShaders();
+	fullTransformationUniformLocation = glGetUniformLocation(programID, "fullTransformMatrix");
 }
 
 MeGlWindow::~MeGlWindow()
 {
+	glDeleteBuffers(1, &theBufferID);
 	glUseProgram(0);
 	glDeleteProgram(programID);
 }
