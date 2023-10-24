@@ -145,8 +145,8 @@ void MeGlWindow::paintGL()
 
 void MeGlWindow::mouseMoveEvent(QMouseEvent* e)
 {
-	//camera.mouseUpdate(glm::vec2(e->x(), e->y()));
-	//repaint();
+	camera.mouseUpdate(glm::vec2(e->x(), e->y()));
+	repaint();
 }
 
 void MeGlWindow::keyPressEvent(QKeyEvent* e)
