@@ -237,3 +237,45 @@ ShapeData ShapeGenerator::makeArrow()
 	memcpy(ret.indices, stackIndices, sizeof(stackIndices));
 	return ret;
 }
+
+ShapeData ShapeGenerator::makeCylinder()
+{
+	float height = 1.0;
+	float radius = 1.0;
+	int numSegments = 100.0;
+	ShapeData ret;
+	int numVerts = numSegments * 2;
+	Vertex* verts = new Vertex[numVerts];
+	GLushort* indices = new GLushort[numSegments * 6];
+
+	float angleStep = 360.0f / numSegments;
+	float currentAngle = 0.0f;
+	for (int i = 0; i < numSegments; i++)
+	{
+		// Top vertex
+		verts[i * 2].position = glm::vec3(radius * cos(glm::radians(currentAngle)), height / 2, radius * sin(glm::radians(currentAngle)));
+		verts[i * 2].color = glm::vec3(1.0f, 0.0f, 0.0f);
+
+		// Bottom vertex
+		verts[i * 2 + 1].position = glm::vec3(radius * cos(glm::radians(currentAngle)), -height / 2, radius * sin(glm::radians(currentAngle)));
+		verts[i * 2 + 1].color = glm::vec3(0.0f, 1.0f, 0.0f);
+
+		currentAngle += angleStep;
+
+		// Indices for the quad
+		indices[i * 6] = i * 2;
+		indices[i * 6 + 1] = i * 2 + 1;
+		indices[i * 6 + 2] = ((i + 1) % numSegments) * 2;
+
+		indices[i * 6 + 3] = ((i + 1) % numSegments) * 2;
+		indices[i * 6 + 4] = i * 2 + 1;
+		indices[i * 6 + 5] = ((i + 1) % numSegments) * 2 + 1;
+	}
+
+	ret.numVertices = numVerts;
+	ret.vertices = verts;
+	ret.numIndices = numSegments * 6;
+	ret.indices = indices;
+
+	return ret;
+}

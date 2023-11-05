@@ -20,6 +20,7 @@ const uint VERTEX_BYTE_SIZE = NUM_FLOATS_PER_VERTICE * sizeof(float);
 GLuint programID;
 GLuint cubeNumIndices;
 GLuint triangleNumIndices;
+GLuint cylinderNumIndices;
 //GLuint arrowNumIndices;
 Camera camera;
 GLuint fullTransformationUniformLocation;
@@ -28,22 +29,25 @@ GLuint theBufferID;
 
 GLuint cubeVertexArrayObjectID;
 GLuint triangleVertexArrayObjectID;
+GLuint cylinderVertexArrayObjectID;
 //GLuint arrowVertexArrayObjectID;
 GLuint cubeIndexByteOffset;
 GLuint triangleIndexByteOffset;
+GLuint cylinderIndexByteOffset;
 //GLuint arrowIndexByteOffset;
 
 void MeGlWindow::sendDataToOpenGL()
 {
 	ShapeData cube = ShapeGenerator::makeCube();
 	ShapeData triangle = ShapeGenerator::makeTriangle();
+	ShapeData cylinder = ShapeGenerator::makeCylinder();
 	//ShapeData arrow = ShapeGenerator::makeArrow();
 
 	glGenBuffers(1, &theBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
 	glBufferData(GL_ARRAY_BUFFER, 
 		cube.vertexBufferSize() + cube.indexBufferSize() +
-		triangle.vertexBufferSize() + triangle.indexBufferSize(), 0, GL_STATIC_DRAW);
+		triangle.vertexBufferSize() + triangle.indexBufferSize() + cylinder.vertexBufferSize() + cylinder.indexBufferSize(), 0, GL_STATIC_DRAW);
 		//arrow.vertexBufferSize() + arrow.indexBufferSize(), 0, GL_STATIC_DRAW);
 	GLsizeiptr currentOffset = 0;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.vertexBufferSize(), cube.vertices);
@@ -53,16 +57,23 @@ void MeGlWindow::sendDataToOpenGL()
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, triangle.vertexBufferSize(), triangle.vertices);
 	currentOffset += triangle.vertexBufferSize();
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, triangle.indexBufferSize(), triangle.indices);
+	currentOffset += triangle.indexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.vertexBufferSize(), cylinder.vertices);
+	currentOffset += cylinder.vertexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.indexBufferSize(), cylinder.indices);
+	//currentOffset += cylinder.indexBufferSize();
 	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, arrow.vertexBufferSize(), arrow.vertices);
 	//currentOffset += arrow.vertexBufferSize();
 	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, arrow.indexBufferSize(), arrow.indices);
 
 	cubeNumIndices = cube.numIndices;
 	triangleNumIndices = triangle.numIndices;
+	cylinderNumIndices = cylinder.numIndices;
 	//arrowNumIndices = arrow.numIndices;
 
 	glGenVertexArrays(1, &cubeVertexArrayObjectID);
 	glGenVertexArrays(1, &triangleVertexArrayObjectID);
+	glGenVertexArrays(1, &cylinderVertexArrayObjectID);
 	//glGenVertexArrays(1, &arrowVertexArrayObjectID);
 
 	glBindVertexArray(cubeVertexArrayObjectID);
@@ -86,12 +97,23 @@ void MeGlWindow::sendDataToOpenGL()
 	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(arrowByteOffset + sizeof(float) * 3));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	GLuint cylinderByteOffset = cube.vertexBufferSize() + cube.indexBufferSize() + triangle.vertexBufferSize() + triangle.indexBufferSize();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)cylinderByteOffset);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(cylinderByteOffset + sizeof(float) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
+
 	cubeIndexByteOffset = cube.vertexBufferSize();
 	triangleIndexByteOffset = triByteOffset + triangle.vertexBufferSize();
+	cylinderIndexByteOffset = cylinderByteOffset + cylinder.vertexBufferSize();
 	//arrowIndexByteOffset = arrowByteOffset + arrow.vertexBufferSize();
 
 	cube.cleanup();
 	triangle.cleanup();
+	cylinder.cleanup();
 	//arrow.cleanup();
 }
 
@@ -134,6 +156,22 @@ void MeGlWindow::paintGL()
 	fullTransformMatrix = worldToProjectionMatrix * triangleModelToWorldMatrix;
 	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
 	glDrawElements(GL_TRIANGLES, triangleNumIndices, GL_UNSIGNED_SHORT, (void*)triangleIndexByteOffset);
+
+	// Cylinder1
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	mat4 cylinderModelToWorldMatrix = glm::translate(vec3(2.5f, 0.0f, -3.0f));
+	fullTransformMatrix = worldToProjectionMatrix * cylinderModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
+
+	// Cylinder2
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	cylinderModelToWorldMatrix = glm::translate(vec3(-2.5f, 0.0f, -3.0f));
+	// Rotate 180 degrees around the x axis
+	cylinderModelToWorldMatrix *= glm::rotate(180.0f, vec3(1.0f, 0.0f, 0.0f));
+	fullTransformMatrix = worldToProjectionMatrix * cylinderModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
 
 	//// Arrow
 	//glBindVertexArray(arrowVertexArrayObjectID);
