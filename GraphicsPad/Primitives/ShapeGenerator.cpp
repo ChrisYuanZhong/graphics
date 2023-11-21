@@ -636,3 +636,50 @@ ShapeData ShapeGenerator::generateNormals(const ShapeData& data)
 		ret.indices[i] = i;
 	return ret;
 }
+
+ShapeData ShapeGenerator::makeCylinder()
+{
+	ShapeData ret;
+
+	const uint tesselation = 100;
+
+	// Define the number of vertices and indices needed for the cylinder
+	ret.numVertices = (tesselation + 1) * 2;  // Two rings of vertices (top and bottom)
+	ret.numIndices = tesselation * 6;         // Two triangles per side, three sides
+
+	ret.vertices = new Vertex[ret.numVertices];
+	ret.indices = new GLushort[ret.numIndices];
+
+	// Generate the vertices for the top and bottom rings
+	for (uint i = 0; i <= tesselation; ++i)
+	{
+		float theta = i * (2 * 3.1415926535897932384626433832795f) / tesselation; // Angle around the cylinder
+
+
+		// Top ring vertex
+		ret.vertices[i].position = glm::vec3(cos(theta), 1.0f, sin(theta));
+		ret.vertices[i].normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		ret.vertices[i].color = randomColor();
+
+		// Bottom ring vertex
+		ret.vertices[i + tesselation + 1].position = glm::vec3(cos(theta), -1.0f, sin(theta));
+		ret.vertices[i + tesselation + 1].normal = glm::vec3(0.0f, -1.0f, 0.0f);
+		ret.vertices[i + tesselation + 1].color = randomColor();
+	}
+
+	// Generate indices for the triangles forming the sides of the cylinder
+	for (uint i = 0; i < tesselation; ++i)
+	{
+		// Indices for the first triangle
+		ret.indices[i * 6] = i;
+		ret.indices[i * 6 + 1] = i + 1;
+		ret.indices[i * 6 + 2] = i + tesselation + 1;
+
+		// Indices for the second triangle
+		ret.indices[i * 6 + 3] = i + tesselation + 1;
+		ret.indices[i * 6 + 4] = i + 1;
+		ret.indices[i * 6 + 5] = i + tesselation + 2;
+	}
+
+	return ret;
+}

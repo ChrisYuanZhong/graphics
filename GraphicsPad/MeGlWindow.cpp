@@ -22,25 +22,30 @@ GLuint programID;
 GLuint passThroughProgramID;
 GLuint cubeNumIndices;
 GLuint planeNumIndices;
+GLuint cylinderNumIndices;
 Camera camera;
 
 GLuint theBufferID;
 
 GLuint cubeVertexArrayObjectID;
 GLuint planeVertexArrayObjectID;
+GLuint cylinderVertexArrayObjectID;
 GLuint arrowIndexByteOffset;
 GLuint planeIndexByteOffset;
+GLuint cylinderIndexByteOffset;
 
 void MeGlWindow::sendDataToOpenGL()
 {
 	ShapeData cube = ShapeGenerator::makeCube();
 	ShapeData plane = ShapeGenerator::makePlane();
+	ShapeData cylinder = ShapeGenerator::makeCylinder();
 
 	glGenBuffers(1, &theBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
 	glBufferData(GL_ARRAY_BUFFER, 
 		cube.vertexBufferSize() + cube.indexBufferSize() +
-		plane.vertexBufferSize() + plane.indexBufferSize(), 0, GL_STATIC_DRAW);
+		plane.vertexBufferSize() + plane.indexBufferSize() +
+		cylinder.vertexBufferSize() + cylinder.indexBufferSize(), 0, GL_STATIC_DRAW);
 	GLsizeiptr currentOffset = 0;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.vertexBufferSize(), cube.vertices);
 	currentOffset += cube.vertexBufferSize();
@@ -52,12 +57,18 @@ void MeGlWindow::sendDataToOpenGL()
 	planeIndexByteOffset = currentOffset;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.indexBufferSize(), plane.indices);
 	currentOffset += plane.indexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.vertexBufferSize(), cylinder.vertices);
+	currentOffset += cylinder.vertexBufferSize();
+	cylinderIndexByteOffset = currentOffset;
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.indexBufferSize(), cylinder.indices);
 
 	cubeNumIndices = cube.numIndices;
 	planeNumIndices = plane.numIndices;
+	cylinderNumIndices = cylinder.numIndices;
 
 	glGenVertexArrays(1, &cubeVertexArrayObjectID);
 	glGenVertexArrays(1, &planeVertexArrayObjectID);
+	glGenVertexArrays(1, &cylinderVertexArrayObjectID);
 
 	glBindVertexArray(cubeVertexArrayObjectID);
 	glEnableVertexAttribArray(0);
@@ -80,8 +91,20 @@ void MeGlWindow::sendDataToOpenGL()
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 6));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	GLuint cylinderByteOffset = planeByteOffset + plane.vertexBufferSize() + plane.indexBufferSize();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)cylinderByteOffset);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 3));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 6));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
+
 	cube.cleanup();
 	plane.cleanup();
+	cylinder.cleanup();
 }
 
 void MeGlWindow::paintGL()
@@ -111,7 +134,7 @@ void MeGlWindow::paintGL()
 	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
 	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
 		&cubeModelToWorldMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
+	//glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
 
 	// Plane
 	glUseProgram(programID);
@@ -134,6 +157,17 @@ void MeGlWindow::paintGL()
 	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
 		&planeModelToWorldMatrix[0][0]);
 	glDrawElements(GL_TRIANGLES, planeNumIndices, GL_UNSIGNED_SHORT, (void*)planeIndexByteOffset);
+
+	// Cylinder
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	mat4 cylinderModelToWorldMatrix = glm::translate(0.0f, 0.0f, -1.0f);
+	modelToProjectionMatrix = worldToProjectionMatrix * cylinderModelToWorldMatrix;
+	fullTransformationUniformLocation = glGetUniformLocation(programID, "modelToProjectionMatrix");
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &modelToProjectionMatrix[0][0]);
+	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
+	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
+				&cylinderModelToWorldMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
 }
 
 void MeGlWindow::mouseMoveEvent(QMouseEvent* e)
