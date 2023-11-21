@@ -21,6 +21,7 @@ GLuint programID;
 GLuint teapotNumIndices;
 GLuint arrowNumIndices;
 GLuint planeNumIndices;
+GLuint cylinderNumIndices;
 Camera camera;
 GLuint fullTransformationUniformLocation;
 
@@ -29,22 +30,26 @@ GLuint theBufferID;
 GLuint teapotVertexArrayObjectID;
 GLuint arrowVertexArrayObjectID;
 GLuint planeVertexArrayObjectID;
+GLuint cylinderVertexArrayObjectID;
 GLuint teapotIndexByteOffset;
 GLuint arrowIndexByteOffset;
 GLuint planeIndexByteOffset;
+GLuint cylinderIndexByteOffset;
 
 void MeGlWindow::sendDataToOpenGL()
 {
 	ShapeData teapot = ShapeGenerator::makeTeapot();
 	ShapeData arrow = ShapeGenerator::makeArrow();
 	ShapeData plane = ShapeGenerator::makePlane(20);
+	ShapeData cylinder = ShapeGenerator::makeCylinder();
 
 	glGenBuffers(1, &theBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
 	glBufferData(GL_ARRAY_BUFFER, 
 		teapot.vertexBufferSize() + teapot.indexBufferSize() +
 		arrow.vertexBufferSize() + arrow.indexBufferSize() +
-		plane.vertexBufferSize() + plane.indexBufferSize(), 0, GL_STATIC_DRAW);
+		plane.vertexBufferSize() + plane.indexBufferSize() +
+		cylinder.vertexBufferSize() + cylinder.indexBufferSize(), 0, GL_STATIC_DRAW);
 	GLsizeiptr currentOffset = 0;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, teapot.vertexBufferSize(), teapot.vertices);
 	currentOffset += teapot.vertexBufferSize();
@@ -61,14 +66,21 @@ void MeGlWindow::sendDataToOpenGL()
 	planeIndexByteOffset = currentOffset;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.indexBufferSize(), plane.indices);
 	currentOffset += plane.indexBufferSize();
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.vertexBufferSize(), cylinder.vertices);
+	currentOffset += cylinder.vertexBufferSize();
+	cylinderIndexByteOffset = currentOffset;
+	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.indexBufferSize(), cylinder.indices);
+	currentOffset += cylinder.indexBufferSize();
 
 	teapotNumIndices = teapot.numIndices;
 	arrowNumIndices = arrow.numIndices;
 	planeNumIndices = plane.numIndices;
+	cylinderNumIndices = cylinder.numIndices;
 
 	glGenVertexArrays(1, &teapotVertexArrayObjectID);
 	glGenVertexArrays(1, &arrowVertexArrayObjectID);
 	glGenVertexArrays(1, &planeVertexArrayObjectID);
+	glGenVertexArrays(1, &cylinderVertexArrayObjectID);
 
 	glBindVertexArray(teapotVertexArrayObjectID);
 	glEnableVertexAttribArray(0);
@@ -102,9 +114,21 @@ void MeGlWindow::sendDataToOpenGL()
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 6));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	GLuint cylinderByteOffset = planeByteOffset + plane.vertexBufferSize() + plane.indexBufferSize();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)cylinderByteOffset);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 3));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 6));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
+
 	teapot.cleanup();
 	arrow.cleanup();
 	plane.cleanup();
+	cylinder.cleanup();
 }
 
 void MeGlWindow::paintGL()
@@ -146,7 +170,14 @@ void MeGlWindow::paintGL()
 	mat4 arrowModelToWorldMatrix = glm::translate(0.0f, 1.0f, -3.0f);
 	fullTransformMatrix = worldToProjectionMatrix * arrowModelToWorldMatrix;
 	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
-	//glDrawElements(GL_TRIANGLES, arrowNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
+	glDrawElements(GL_TRIANGLES, arrowNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
+
+	// Cylinder
+	glBindVertexArray(cylinderVertexArrayObjectID);
+	mat4 cylinderModelToWorldMatrix = glm::translate(0.0f, 2.0f, -1.0f);
+	fullTransformMatrix = worldToProjectionMatrix * cylinderModelToWorldMatrix;
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
+	glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
 
 	// Plane
 	glBindVertexArray(planeVertexArrayObjectID);
