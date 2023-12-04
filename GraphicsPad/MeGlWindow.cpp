@@ -15,8 +15,10 @@ using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 
+GLuint textureID;
+
 const uint NUM_VERTICES_PER_TRI = 3;
-const uint NUM_FLOATS_PER_VERTICE = 9;
+const uint NUM_FLOATS_PER_VERTICE = 11;
 const uint VERTEX_BYTE_SIZE = NUM_FLOATS_PER_VERTICE * sizeof(float);
 GLuint programID;
 GLuint passThroughProgramID;
@@ -37,74 +39,88 @@ GLuint cylinderIndexByteOffset;
 void MeGlWindow::sendDataToOpenGL()
 {
 	ShapeData cube = ShapeGenerator::makeCube();
-	ShapeData plane = ShapeGenerator::makePlane();
-	ShapeData cylinder = ShapeGenerator::makeCylinder();
+	//ShapeData plane = ShapeGenerator::makeCube();
+	//ShapeData cylinder = ShapeGenerator::makeCube();
+
+	std::string fileName = "./Abstergo.png";
+	QImage img = QGLWidget::convertToGLFormat(QImage(fileName.c_str(), "PNG"));
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	glGenBuffers(1, &theBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
 	glBufferData(GL_ARRAY_BUFFER, 
-		cube.vertexBufferSize() + cube.indexBufferSize() +
-		plane.vertexBufferSize() + plane.indexBufferSize() +
-		cylinder.vertexBufferSize() + cylinder.indexBufferSize(), 0, GL_STATIC_DRAW);
+		cube.vertexBufferSize() + cube.indexBufferSize(), 0, GL_STATIC_DRAW);
 	GLsizeiptr currentOffset = 0;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.vertexBufferSize(), cube.vertices);
 	currentOffset += cube.vertexBufferSize();
 	arrowIndexByteOffset = currentOffset;
 	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.indexBufferSize(), cube.indices);
-	currentOffset += cube.indexBufferSize();
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.vertexBufferSize(), plane.vertices);
-	currentOffset += plane.vertexBufferSize();
-	planeIndexByteOffset = currentOffset;
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.indexBufferSize(), plane.indices);
-	currentOffset += plane.indexBufferSize();
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.vertexBufferSize(), cylinder.vertices);
-	currentOffset += cylinder.vertexBufferSize();
-	cylinderIndexByteOffset = currentOffset;
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.indexBufferSize(), cylinder.indices);
+	//currentOffset += cube.indexBufferSize();
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.vertexBufferSize(), plane.vertices);
+	//currentOffset += plane.vertexBufferSize();
+	//planeIndexByteOffset = currentOffset;
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, plane.indexBufferSize(), plane.indices);
+	//currentOffset += plane.indexBufferSize();
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.vertexBufferSize(), cylinder.vertices);
+	//currentOffset += cylinder.vertexBufferSize();
+	//cylinderIndexByteOffset = currentOffset;
+	//glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cylinder.indexBufferSize(), cylinder.indices);
 
 	cubeNumIndices = cube.numIndices;
-	planeNumIndices = plane.numIndices;
-	cylinderNumIndices = cylinder.numIndices;
+	//planeNumIndices = plane.numIndices;
+	//cylinderNumIndices = cylinder.numIndices;
 
 	glGenVertexArrays(1, &cubeVertexArrayObjectID);
-	glGenVertexArrays(1, &planeVertexArrayObjectID);
-	glGenVertexArrays(1, &cylinderVertexArrayObjectID);
+	//glGenVertexArrays(1, &planeVertexArrayObjectID);
+	//glGenVertexArrays(1, &cylinderVertexArrayObjectID);
 
 	glBindVertexArray(cubeVertexArrayObjectID);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, 0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(sizeof(float) * 3));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(sizeof(float) * 6));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(sizeof(float) * 9));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
-	glBindVertexArray(planeVertexArrayObjectID);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
-	GLuint planeByteOffset = cube.vertexBufferSize() + cube.indexBufferSize();
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)planeByteOffset);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 3));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 6));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
+	//glBindVertexArray(planeVertexArrayObjectID);
+	//glEnableVertexAttribArray(0);
+	//glEnableVertexAttribArray(1);
+	//glEnableVertexAttribArray(2);
+	//glEnableVertexAttribArray(3);
+	//glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	//GLuint planeByteOffset = cube.vertexBufferSize() + cube.indexBufferSize();
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)planeByteOffset);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 3));
+	//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 6));
+	//glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(planeByteOffset + sizeof(float) * 9));
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
-	glBindVertexArray(cylinderVertexArrayObjectID);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
-	GLuint cylinderByteOffset = planeByteOffset + plane.vertexBufferSize() + plane.indexBufferSize();
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)cylinderByteOffset);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 3));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 6));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
+	//glBindVertexArray(cylinderVertexArrayObjectID);
+	//glEnableVertexAttribArray(0);
+	//glEnableVertexAttribArray(1);
+	//glEnableVertexAttribArray(2);
+	//glEnableVertexAttribArray(3);
+	//glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
+	//GLuint cylinderByteOffset = planeByteOffset + plane.vertexBufferSize() + plane.indexBufferSize();
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)cylinderByteOffset);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 3));
+	//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 6));
+	//glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, VERTEX_BYTE_SIZE, (void*)(cylinderByteOffset + sizeof(float) * 9));
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
 
 	cube.cleanup();
-	plane.cleanup();
-	cylinder.cleanup();
+	//plane.cleanup();
+	//cylinder.cleanup();
 }
 
 void MeGlWindow::paintGL()
@@ -121,20 +137,6 @@ void MeGlWindow::paintGL()
 	GLuint modelToWorldMatrixUniformLocation;
 
 	glm::vec3 lightPositionWorld(0.0f, 1.5f, 0.0f);
-
-	// Cube
-	glBindVertexArray(cubeVertexArrayObjectID);
-	mat4 cubeModelToWorldMatrix = 
-		glm::translate(lightPositionWorld) *
-		glm::scale(0.1f, 0.1f, 0.1f);
-	modelToProjectionMatrix = worldToProjectionMatrix * cubeModelToWorldMatrix;
-	glUseProgram(passThroughProgramID);
-	fullTransformationUniformLocation = glGetUniformLocation(programID, "modelToProjectionMatrix");
-	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &modelToProjectionMatrix[0][0]);
-	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
-	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
-		&cubeModelToWorldMatrix[0][0]);
-	//glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
 
 	// Plane
 	glUseProgram(programID);
@@ -156,7 +158,22 @@ void MeGlWindow::paintGL()
 	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
 	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
 		&planeModelToWorldMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, planeNumIndices, GL_UNSIGNED_SHORT, (void*)planeIndexByteOffset);
+	//glDrawElements(GL_TRIANGLES, planeNumIndices, GL_UNSIGNED_SHORT, (void*)planeIndexByteOffset);
+
+	// Cube
+	glBindVertexArray(cubeVertexArrayObjectID);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	mat4 cubeModelToWorldMatrix = glm::translate(0.0f, 0.0f, -1.0f);
+	modelToProjectionMatrix = worldToProjectionMatrix * cubeModelToWorldMatrix;
+	fullTransformationUniformLocation = glGetUniformLocation(programID, "modelToProjectionMatrix");
+	glUniformMatrix4fv(fullTransformationUniformLocation, 1, GL_FALSE, &modelToProjectionMatrix[0][0]);
+	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
+	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
+				&cubeModelToWorldMatrix[0][0]);
+	GLuint baseColorTextUniformLocation = glGetUniformLocation(programID, "myTexture");
+	glUniform1i(baseColorTextUniformLocation, 0);
+	glDrawElements(GL_TRIANGLES, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)arrowIndexByteOffset);
 
 	// Cylinder
 	glBindVertexArray(cylinderVertexArrayObjectID);
@@ -167,7 +184,7 @@ void MeGlWindow::paintGL()
 	modelToWorldMatrixUniformLocation = glGetUniformLocation(programID, "modelToWorldMatrix");
 	glUniformMatrix4fv(modelToWorldMatrixUniformLocation, 1, GL_FALSE,
 				&cylinderModelToWorldMatrix[0][0]);
-	glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
+	//glDrawElements(GL_TRIANGLES, cylinderNumIndices, GL_UNSIGNED_SHORT, (void*)cylinderIndexByteOffset);
 }
 
 void MeGlWindow::mouseMoveEvent(QMouseEvent* e)

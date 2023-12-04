@@ -3,10 +3,12 @@
 out vec4 daColor;
 in vec3 normalWorld;
 in vec3 vertexPositionWorld;
+in vec2 texCoordOut;
 
 uniform vec3 lightPositionWorld;
 uniform vec3 eyePositionWorld;
 uniform vec4 ambientLight;
+uniform sampler2D myTexture;
 
 void main()
 {
@@ -23,4 +25,7 @@ void main()
 	vec4 specularLight = vec4(0, 0, s, 1);
 
 	daColor = ambientLight + clamp(diffuseLight, 0, 1) + clamp(specularLight, 0, 1);
+
+	// Texture
+	daColor = daColor * texture(myTexture, texCoordOut);
 }

@@ -5,7 +5,7 @@ typedef unsigned int uint;
 class ShapeGenerator
 {
 	static ShapeData makePlaneVerts(uint dimensions);
-	static ShapeData makePlaneIndices(uint dimensions);
+	//static ShapeData makePlaneIndices(uint dimensions);
 
 	// Teapot helpers
 	static void generatePatches(float * v, float * n, float * tc, unsigned short* el, int grid);
