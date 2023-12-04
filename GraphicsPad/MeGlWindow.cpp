@@ -38,7 +38,7 @@ GLuint cylinderIndexByteOffset;
 
 void MeGlWindow::sendDataToOpenGL()
 {
-	ShapeData cube = ShapeGenerator::makeCube();
+	ShapeData cube = ShapeGenerator::makeCylinder();
 	//ShapeData plane = ShapeGenerator::makeCube();
 	//ShapeData cylinder = ShapeGenerator::makeCube();
 
@@ -51,6 +51,10 @@ void MeGlWindow::sendDataToOpenGL()
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	// Wrap
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	glGenBuffers(1, &theBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
